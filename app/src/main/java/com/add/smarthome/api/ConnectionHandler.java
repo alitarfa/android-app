@@ -2,6 +2,7 @@ package com.add.smarthome.api;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
 
@@ -52,7 +53,11 @@ public class ConnectionHandler extends WebSocketClient {
     @Override
     public void onBinaryReceived(byte[] data) {
         Log.e("MESSAGE",new String(data));
-        new NotificationHandler().showNotification(context, title, new String(data), intent);
+        SharedPreferences prefs = context.getSharedPreferences("com.example.app", Context.MODE_PRIVATE);
+        if (prefs.getBoolean("notification",true)) {
+            new NotificationHandler().showNotification(context, title, new String(data), intent);
+        }
+
     }
 
     @Override

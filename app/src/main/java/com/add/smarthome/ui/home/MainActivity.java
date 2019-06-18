@@ -5,7 +5,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,6 +16,7 @@ import android.widget.TextView;
 
 import com.add.smarthome.R;
 import com.add.smarthome.api.ConnectionHandler;
+import com.add.smarthome.ui.dialog.Settings;
 import com.add.smarthome.ui.notification.NotificationHandler;
 import com.add.smarthome.utils.Utils;
 import com.google.android.material.snackbar.Snackbar;
@@ -22,14 +25,9 @@ import com.google.android.material.snackbar.Snackbar;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-
-import okhttp3.WebSocket;
-
 import tech.gusavila92.websocketclient.WebSocketClient;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements Settings.OnChangeAction {
 
     private ImageView actionHandler;
     private ImageView settingHandler;
@@ -37,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private WebSocketClient webSocketClient;
     private static boolean isActivate = false;
     private ConstraintLayout  main;
+    SharedPreferences prefs ;
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -49,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         main = findViewById(R.id.main);
         status =findViewById(R.id.status);
         status.setText("Disconnected");
-
+        prefs = this.getSharedPreferences("com.example.app", Context.MODE_PRIVATE);
         actionHandler.setOnClickListener(v-> {
             try {
                 onChangeActivation(Utils.URL_SERVER);
@@ -87,11 +86,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
     /**
      * open Dialog Setting
      */
     private void onOpenSetting() {
-
+        Settings settings = new Settings(this);
+        settings.show(getSupportFragmentManager(),"Setting");
     }
 
     private void onChangeStatus() {
@@ -112,5 +113,11 @@ public class MainActivity extends AppCompatActivity {
     public void ShowSnackbar(String message) {
         Snackbar snackbar = Snackbar.make(main,message, Snackbar.LENGTH_LONG);
         snackbar.show();
+    }
+
+    @Override
+    public void onHandelSW(boolean status) {
+        prefs.edit().putBoolean("notification",status).apply();
+        Log.e("Staus", String.valueOf(status));
     }
 }
