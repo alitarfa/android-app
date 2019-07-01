@@ -15,14 +15,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.add.smarthome.R;
-import com.add.smarthome.api.ConnectionHandler;
+import com.add.smarthome.api.RabbitMQHandler;
 import com.add.smarthome.ui.dialog.Settings;
-import com.add.smarthome.ui.notification.NotificationHandler;
 import com.add.smarthome.utils.Utils;
 import com.google.android.material.snackbar.Snackbar;
-
-
-import java.net.URI;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import java.net.URISyntaxException;
 
 import tech.gusavila92.websocketclient.WebSocketClient;
@@ -36,6 +34,8 @@ public class MainActivity extends AppCompatActivity implements Settings.OnChange
     private static boolean isActivate = false;
     private ConstraintLayout  main;
     SharedPreferences prefs ;
+    MqttClient mqttClient;
+
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
@@ -59,6 +59,8 @@ public class MainActivity extends AppCompatActivity implements Settings.OnChange
 
         settingHandler.setOnClickListener(v -> onOpenSetting());
 
+
+
     }
 
 
@@ -70,19 +72,25 @@ public class MainActivity extends AppCompatActivity implements Settings.OnChange
 
         if (isActivate) {
             actionHandler.setImageDrawable(getResources().getDrawable(R.drawable.ic_power_off));
-            if (webSocketClient != null) {
-                webSocketClient.close();
+            if (mqttClient != null) {
+                try {
+                    mqttClient.close();
+                } catch (MqttException e) {
+                    e.printStackTrace();
+                }
                 ShowSnackbar("You are Disconnected");
                 status.setText("Disconnected");
             }
             isActivate = false;
         }else {
             actionHandler.setImageDrawable(getResources().getDrawable(R.drawable.ic_power));
-            connection(url);
+            RabbitMQHandler handler = new RabbitMQHandler(this,"Smart Home","Content to passs",new Intent(this, MainActivity.class));
+            mqttClient = handler.subscribe();
             isActivate = true;
             ShowSnackbar("You are Connected");
             status.setText("Connected");
         }
+
 
     }
 
@@ -93,21 +101,6 @@ public class MainActivity extends AppCompatActivity implements Settings.OnChange
     private void onOpenSetting() {
         Settings settings = new Settings(this);
         settings.show(getSupportFragmentManager(),"Setting");
-    }
-
-    private void onChangeStatus() {
-
-    }
-
-    /**
-     * Create The connection
-     */
-    private void connection(String url) throws URISyntaxException {
-        webSocketClient = new ConnectionHandler(new URI(url),this, "Danger case", " you have problem in your home", new Intent(this,MainActivity.class));
-        webSocketClient.setConnectTimeout(10000);
-        webSocketClient.setReadTimeout(60000);
-        webSocketClient.enableAutomaticReconnection(5000);
-        webSocketClient.connect();
     }
 
     public void ShowSnackbar(String message) {
